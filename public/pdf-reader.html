@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leitora de PDFs — SUPERANIMEHERO</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .reader-intro{padding:30px;background:var(--accent);margin-bottom:28px}
+    .reader-intro h2{font-size:clamp(32px,5vw,48px);line-height:1;margin:0 0 14px;letter-spacing:-1.8px}
+    .reader-intro p{font-size:13px;line-height:1.6;max-width:760px;margin:0}
+    .reader-layout{display:grid;grid-template-columns:minmax(240px,330px) minmax(0,1fr);gap:22px;align-items:start}
+    .pdf-list,.text-panel{background:#fff;border:1px solid var(--line);padding:20px;min-width:0}
+    .pdf-list-head,.text-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+    .pdf-list h3,.text-panel h3{font-size:18px;margin:0}
+    .small-button,.pdf-item{font:inherit;cursor:pointer}
+    .small-button{border:1px solid var(--dark);background:#fff;padding:9px 11px;font-size:11px;font-weight:700}
+    .small-button:hover{background:var(--accent)}
+    .pdf-item{display:block;width:100%;text-align:left;background:#fafaf7;border:1px solid var(--line);padding:12px;margin-bottom:8px;overflow-wrap:anywhere}
+    .pdf-item:hover,.pdf-item.active{background:var(--accent);border-color:var(--dark)}
+    .pdf-item strong{display:block;font-size:12px;line-height:1.4}
+    .pdf-item span{display:block;color:var(--muted);font-size:10px;margin-top:6px}
+    .reader-message{font-size:12px;line-height:1.5;color:var(--muted);padding:14px;background:#f5f5f2}
+    .reader-status{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 14px;overflow-wrap:anywhere}
+    #pdf-text{width:100%;min-height:520px;resize:vertical;border:1px solid var(--line);padding:16px;font:13px/1.65 Consolas,"Courier New",monospace;white-space:pre-wrap;color:var(--ink);background:#fff}
+    #pdf-text:focus{outline:1px solid var(--dark)}
+    .text-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .text-actions button{border:1px solid var(--dark);background:var(--dark);color:#fff;padding:11px 14px;font-size:11px;font-weight:700;cursor:pointer}
+    .text-actions button:disabled{opacity:.45;cursor:not-allowed}
+    @media(max-width:760px){.reader-layout{grid-template-columns:1fr}#pdf-text{min-height:380px}.reader-intro{padding:22px}}
+
+    .scarlet-button{background:#6e1648!important;color:#fff!important;border-color:#6e1648!important;font-weight:800!important}
+    .scarlet-panel{margin-top:28px;border:1px solid #d8c4d0;background:#fff;padding:22px}
+    .scarlet-panel[hidden]{display:none}
+    .scarlet-heading{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+    .scarlet-mark{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#6e1648;color:#fff;font-size:24px;font-weight:900}
+    .scarlet-heading .eyebrow{margin:0 0 4px;color:#6e1648}
+    .scarlet-heading h3{font-size:23px;margin:0;letter-spacing:-.7px}
+    .scarlet-category{margin-left:auto;font-size:10px;font-weight:800;text-transform:uppercase;background:#f4e8ef;padding:8px 10px}
+    #scarlet-title{font-size:clamp(26px,4vw,38px);line-height:1.1;letter-spacing:-1px;margin:24px 0 12px}
+    .scarlet-standfirst{font-size:17px;line-height:1.55;color:#555;margin:0 0 18px}
+    .scarlet-result-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 28px}
+    .scarlet-result-actions button{border:1px solid #222;background:#222;color:#fff;padding:10px 12px;font-size:11px;font-weight:700;cursor:pointer}
+    .scarlet-result-actions button:hover{background:#6e1648;border-color:#6e1648}
+    .scarlet-panel h4{font-size:13px;text-transform:uppercase;letter-spacing:.8px;margin:26px 0 12px}
+    .scarlet-prose{font-size:15px;line-height:1.8}
+    .scarlet-prose p{margin:0 0 14px}
+    .scarlet-list{padding-left:20px;font-size:13px;line-height:1.7}
+    .scarlet-list li{margin-bottom:7px}
+    .scarlet-analysis{padding:16px;background:#f8eef4;border-left:3px solid #6e1648;font-size:14px;line-height:1.75;margin:18px 0}
+    .scarlet-seo{margin-top:24px;padding:18px;background:#f7f7f4;border:1px solid var(--line)}
+    .scarlet-seo h4{margin-top:0!important}
+    .seo-field{margin:14px 0 0}
+    .seo-field label{display:block;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+    .seo-value{font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+    .scarlet-details{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+    .scarlet-details summary{font-size:12px;font-weight:700;cursor:pointer}
+    .scarlet-images-head p,.scarlet-note{font-size:11px;line-height:1.5;color:var(--muted)}
+    .scarlet-images-head p{margin:0}
+    .scarlet-note{border-top:1px solid var(--line);padding-top:12px;margin-top:24px}
+    #scarlet-images .empty{grid-column:1/-1}
+
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/" style="color:inherit;text-decoration:none"><span class="mark">CG</span><div><h1>Central Geek</h1><p>LEITORA DE PDFS</p></div></a>
+    <div class="header-actions"><a class="reader-link" href="/">← Voltar às notícias</a><button id="reload-pdfs" class="refresh">↻ Atualizar lista</button></div>
+  </header>
+  <main>
+    <section class="reader-intro">
+      <p class="eyebrow">FERRAMENTA DE REDAÇÃO</p>
+      <h2>Conheça a Scarlet.</h2>
+      <p>A Scarlet faz uma revisão conservadora do texto extraído: remove repetições claras e ruídos de PDF, preservando a redação, os detalhes e a extensão da matéria original. Não resume nem acrescenta opiniões. Também prepara os campos de SEO para o WordPress.</p>
+    </section>
+    <div class="reader-layout">
+      <section class="pdf-list">
+        <div class="pdf-list-head"><h3>Arquivos disponíveis</h3><span id="pdf-count" class="source">0 PDFs</span></div>
+        <p id="list-status" class="reader-status">Carregando lista de PDFs…</p>
+        <div id="pdf-files"></div>
+        <div class="reader-message">Coloque seus PDFs na pasta <strong>central_geek/pdf-materia</strong>. Os PDFs gerados pelo botão de notícias serão salvos ali automaticamente.</div>
+      </section>
+      <section class="text-panel">
+        <div class="text-head"><h3>Texto extraído</h3><span id="text-stats" class="source">Nenhum arquivo selecionado</span></div>
+        <p id="read-status" class="reader-status">Selecione um PDF à esquerda para extrair o texto.</p>
+        <textarea id="pdf-text" placeholder="O texto do PDF aparecerá aqui…" spellcheck="false"></textarea>
+        <div class="text-actions">
+          <button id="download-txt" disabled>Baixar texto extraído .TXT</button>
+          <button id="copy-text" disabled>Copiar texto</button>
+          <button id="clear-text" class="small-button">Limpar</button>
+          <button id="ask-scarlet" class="scarlet-button" disabled>✦ Scarlet: revisar matéria</button>
+        </div>
+        <section id="scarlet-panel" class="scarlet-panel" hidden aria-live="polite">
+          <div class="scarlet-heading"><span class="scarlet-mark">S</span><div><p class="eyebrow">ASSISTENTE EDITORIAL</p><h3>Scarlet</h3></div><span id="scarlet-category" class="scarlet-category"></span></div>
+          <p id="scarlet-status" class="reader-status">A Scarlet está pronta para analisar o PDF.</p>
+          <div id="scarlet-result" hidden>
+            <h2 id="scarlet-title"></h2>
+            <p id="scarlet-standfirst" class="scarlet-standfirst"></p>
+            <div class="scarlet-result-actions"><button id="copy-summary" type="button">Copiar matéria limpa</button><button id="download-summary" type="button">Baixar matéria limpa .TXT</button><button id="download-cleaned" type="button">Baixar texto limpo .TXT</button></div>
+            <div id="scarlet-summary" class="scarlet-prose"></div>
+            
+            <section class="scarlet-seo" aria-label="SEO para WordPress">
+              <h4>SEO para WordPress</h4>
+              <div class="seo-field"><label>Metadescrição</label><div id="scarlet-meta-description" class="seo-value"></div></div>
+              <div class="seo-field"><label>Slug</label><div id="scarlet-slug" class="seo-value"></div></div>
+              <div class="seo-field"><label>Frase-chave de foco</label><div id="scarlet-focus-keyphrase" class="seo-value"></div></div>
+            </section>
+            <details id="scarlet-verify-wrap" class="scarlet-details"><summary>Checagem editorial (se necessário)</summary><ul id="scarlet-verify" class="scarlet-list"></ul></details>
+            <div class="scarlet-images-head"><div><h4>Imagens relacionadas</h4><p>Busca por assunto em Pinterest, Tudum, IMDb e Flim. Confirme os direitos de uso antes de publicar.</p></div></div>
+            <div id="scarlet-images" class="images-grid"><div class="empty">As imagens aparecerão após a análise.</div></div>
+            <p id="scarlet-note" class="scarlet-note"></p>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+  <script src="pdf-reader.js"></script>
+</body>
+</html>
